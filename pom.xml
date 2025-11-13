@@ -68,6 +68,11 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.5.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -75,12 +80,14 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<!-- Konfigurasi ini seringkali tidak lagi diperlukan dengan versi Spring Boot modern -->
 				<configuration>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
 						</path>
+						<!-- Spring Boot biasanya mengelola ini secara otomatis -->
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
