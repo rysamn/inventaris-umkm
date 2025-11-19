@@ -33,7 +33,7 @@ public class PenggunaService {
         }
 
         String token = jwtUtil.generateToken(pengguna.getNamaPengguna(), pengguna.getPeran(), pengguna.getId());
-        
+
         return new LoginResponseDto(token, pengguna.getNamaPengguna(), pengguna.getPeran(), pengguna.getId());
     }
 
@@ -47,6 +47,13 @@ public class PenggunaService {
     public PenggunaDto getPenggunaById(Integer id) {
         PenggunaDto pengguna = penggunaDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pengguna", "id", id));
+        pengguna.setKataSandi(null); // Jangan return password
+        return pengguna;
+    }
+
+    public PenggunaDto getPenggunaByUsername(String username) {
+        PenggunaDto pengguna = penggunaDao.findByNamaPengguna(username)
+                .orElseThrow(() -> new ResourceNotFoundException("Pengguna", "username", username));
         pengguna.setKataSandi(null); // Jangan return password
         return pengguna;
     }
