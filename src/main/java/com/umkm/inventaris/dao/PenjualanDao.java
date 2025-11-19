@@ -80,7 +80,7 @@ public class PenjualanDao {
     public int save(PenjualanDto penjualan, KeyHolder keyHolder) {
         String sql = "INSERT INTO penjualan (id_pelanggan, id_pengguna, total) VALUES (?, ?, ?)";
         return jdbc.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"}); // HANYA RETURN ID
             ps.setInt(1, penjualan.getIdPelanggan());
             ps.setInt(2, penjualan.getIdPengguna());
             ps.setBigDecimal(3, penjualan.getTotal());
