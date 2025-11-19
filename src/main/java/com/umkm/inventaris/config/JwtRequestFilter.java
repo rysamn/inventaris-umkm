@@ -1,7 +1,5 @@
 package com.umkm.inventaris.config;
 
-import com.umkm.inventaris.dto.PenggunaDto;
-import com.umkm.inventaris.service.PenggunaService;
 import com.umkm.inventaris.util.JwtUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -12,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -21,11 +20,14 @@ import java.io.IOException;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private PenggunaService penggunaService;
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    public void setUserDetailsService(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -49,15 +51,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
-                PenggunaDto penggunaDto = this.penggunaService.getPenggunaByUsername(username);
-
-                if (penggunaDto != null && jwtUtil.validateToken(jwt, username)) {
-                    UserDetails userDetails = org.springframework.security.core.userdetails.User
-                            .withUsername(penggunaDto.getNamaPengguna())
-                            .password(penggunaDto.getKataSandi())
-                            .authorities("ROLE_" + penggunaDto.getPeran())
-                            .build();
-
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
                     UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
                             userDetails, null, userDetails.getAuthorities());
                     usernamePasswordAuthenticationToken

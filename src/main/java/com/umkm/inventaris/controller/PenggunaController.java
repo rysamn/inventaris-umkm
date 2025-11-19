@@ -47,19 +47,6 @@ public class PenggunaController {
         }
     }
 
-    @PostMapping
-    public ResponseEntity<String> createPengguna(@RequestBody PenggunaDto penggunaDto) {
-        try {
-            if (penggunaService.createPengguna(penggunaDto) > 0) {
-                return new ResponseEntity<>("Data Pengguna berhasil dibuat.", HttpStatus.CREATED);
-            }
-            return new ResponseEntity<>("Gagal membuat data Pengguna.", HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception e) {
-            logger.error("Error saat membuat data Pengguna: {}", e.getMessage(), e);
-            return new ResponseEntity<>("Terjadi kesalahan pada server.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<String> updatePengguna(@PathVariable Integer id, @RequestBody PenggunaDto penggunaDto) {
         try {

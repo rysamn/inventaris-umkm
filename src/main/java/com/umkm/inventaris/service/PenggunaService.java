@@ -8,12 +8,20 @@ import com.umkm.inventaris.exception.ResourceNotFoundException;
 import com.umkm.inventaris.util.JwtUtil;
 import com.umkm.inventaris.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 @Service
-public class PenggunaService {
+public class PenggunaService implements UserDetailsService {
 
     @Autowired
     private PenggunaDao penggunaDao;
@@ -81,5 +89,21 @@ public class PenggunaService {
 
     public int deletePengguna(Integer id) {
         return penggunaDao.delete(id);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        PenggunaDto pengguna = penggunaDao.findByNamaPengguna(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User tidak ditemukan: " + username));
+
+        Collection<GrantedAuthority> authorities = new ArrayList<>();
+        if (pengguna.getPeran() != null && !pengguna.getPeran().isEmpty()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + pengguna.getPeran().toUpperCase()));
+        }
+
+        return new User(
+                pengguna.getNamaPengguna(),
+                pengguna.getKataSandi(),
+                authorities);
     }
 }
