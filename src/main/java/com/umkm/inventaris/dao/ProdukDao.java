@@ -23,16 +23,17 @@ public class ProdukDao {
         dto.setStok(rs.getInt("stok"));
         dto.setSatuan(rs.getString("satuan"));
         dto.setNamaKategori(rs.getString("nama_kategori"));
+        dto.setFotoProduk(rs.getString("foto_produk"));
         return dto;
     };
 
     public List<ProdukDto> findAll() {
-        String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori FROM produk ORDER BY id";
+        String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori, foto_produk FROM produk ORDER BY id";
         return jdbc.query(sql, rowMapper);
     }
 
     public Optional<ProdukDto> findById(Integer id) {
-        String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori FROM produk WHERE id = ?";
+        String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori, foto_produk FROM produk WHERE id = ?";
         try {
             return Optional.ofNullable(jdbc.queryForObject(sql, rowMapper, id));
         } catch (EmptyResultDataAccessException e) {
@@ -41,14 +42,13 @@ public class ProdukDao {
     }
 
     public int save(ProdukDto p) {
-        String sql = "INSERT INTO produk (nama_produk, harga, stok, satuan, nama_kategori) VALUES (?, ?, ?, ?, ?)";
-        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori());
+        String sql = "INSERT INTO produk (nama_produk, harga, stok, satuan, nama_kategori, foto_produk) VALUES (?, ?, ?, ?, ?, ?)";
+        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(), p.getFotoProduk());
     }
 
     public int update(ProdukDto p) {
-        String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ? WHERE id = ?";
-        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(),
-                p.getId());
+        String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ?, foto_produk = ? WHERE id = ?";
+        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(), p.getFotoProduk(), p.getId());
     }
 
     public int delete(Integer id) {

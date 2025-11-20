@@ -11,4 +11,5 @@ public class ProdukDto {
     private Integer stok;
     private String satuan;
     private String namaKategori;
+    private String fotoProduk;
 }

@@ -9,16 +9,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/produk")
-@CrossOrigin("*") // Sebaiknya batasi untuk domain frontend Anda di production
+@CrossOrigin("*")
 public class ProdukController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProdukController.class);
+    private static final String UPLOAD_DIR = "uploads/produk/";
 
     @Autowired
     private ProdukService produkService;
@@ -82,5 +88,23 @@ public class ProdukController {
         }
         return new ResponseEntity<>("Gagal menghapus, Produk dengan id " + id + " tidak ditemukan.",
                 HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<String> uploadFoto(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return new ResponseEntity<>("File tidak boleh kosong.", HttpStatus.BAD_REQUEST);
+            }
+            
+            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Files.createDirectories(Paths.get(UPLOAD_DIR));
+            Files.write(Paths.get(UPLOAD_DIR + fileName), file.getBytes());
+            
+            return ResponseEntity.ok(fileName);
+        } catch (IOException e) {
+            logger.error("Error saat upload foto: {}", e.getMessage(), e);
+            return new ResponseEntity<>("Gagal upload foto.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
