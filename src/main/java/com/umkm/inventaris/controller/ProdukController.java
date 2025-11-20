@@ -6,6 +6,8 @@ import com.umkm.inventaris.service.ProdukService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
@@ -98,13 +101,39 @@ public class ProdukController {
             }
             
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Files.createDirectories(Paths.get(UPLOAD_DIR));
-            Files.write(Paths.get(UPLOAD_DIR + fileName), file.getBytes());
             
+            // Gunakan path absolut
+            Path uploadDir = Paths.get("uploads/produk").toAbsolutePath().normalize();
+            Files.createDirectories(uploadDir);
+            
+            Path filePath = uploadDir.resolve(fileName);
+            Files.write(filePath, file.getBytes());
+            
+            logger.info("File uploaded successfully: {}", filePath.toString());
             return ResponseEntity.ok(fileName);
+            
         } catch (IOException e) {
             logger.error("Error saat upload foto: {}", e.getMessage(), e);
             return new ResponseEntity<>("Gagal upload foto.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/foto/{fileName}")
+    public ResponseEntity<Resource> downloadFoto(@PathVariable String fileName) {
+        try {
+            Path filePath = Paths.get("uploads/produk").toAbsolutePath().normalize().resolve(fileName);
+            Resource resource = new UrlResource(filePath.toUri());
+            
+            if (resource.exists() && resource.isReadable()) {
+                return ResponseEntity.ok()
+                    .header("Content-Disposition", "inline; filename=\"" + fileName + "\"")
+                    .body(resource);
+            }
+            logger.warn("File not found: {}", filePath.toString());
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            logger.error("Error saat download foto: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

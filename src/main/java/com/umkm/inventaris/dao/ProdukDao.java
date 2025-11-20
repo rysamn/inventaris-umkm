@@ -10,6 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Repository
 public class ProdukDao {
     @Autowired
@@ -23,7 +26,7 @@ public class ProdukDao {
         dto.setStok(rs.getInt("stok"));
         dto.setSatuan(rs.getString("satuan"));
         dto.setNamaKategori(rs.getString("nama_kategori"));
-        dto.setFotoProduk(rs.getString("foto_produk"));
+        dto.setFotoProduk(rs.getBytes("foto_produk"));  // Ubah ke getBytes
         return dto;
     };
 
@@ -48,11 +51,26 @@ public class ProdukDao {
 
     public int update(ProdukDto p) {
         String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ?, foto_produk = ? WHERE id = ?";
-        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(), p.getFotoProduk(), p.getId());
+        try {
+            return jdbc.update(sql, 
+                p.getNamaProduk(), 
+                p.getHarga(), 
+                p.getStok(), 
+                p.getSatuan(), 
+                p.getNamaKategori(), 
+                p.getFotoProduk(),  // byte array
+                p.getId()
+            );
+        } catch (Exception e) {
+            logger.error("Error updating produk: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     public int delete(Integer id) {
         String sql = "DELETE FROM produk WHERE id = ?";
         return jdbc.update(sql, id);
     }
+
+    private static final Logger logger = LoggerFactory.getLogger(ProdukDao.class);
 }
