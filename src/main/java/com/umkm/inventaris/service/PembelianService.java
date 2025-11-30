@@ -71,7 +71,7 @@ public class PembelianService {
                     .orElseThrow(() -> new ResourceNotFoundException("Produk", "id", detail.getIdProduk()));
             
             produk.setStok(produk.getStok() + detail.getJumlah());
-            produkDao.update(produk);
+            produkDao.update(produk, null);
             
             // 4. Catat log inventaris
             logInventarisService.createLog(
@@ -96,7 +96,7 @@ public class PembelianService {
                     .orElseThrow(() -> new ResourceNotFoundException("Produk", "id", detail.getIdProduk()));
             
             produk.setStok(produk.getStok() - detail.getJumlah());
-            produkDao.update(produk);
+            produkDao.update(produk, null);
             
             // Log
             logInventarisService.createLog(

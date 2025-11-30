@@ -8,6 +8,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Base64;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -26,7 +27,14 @@ public class ProdukDao {
         dto.setStok(rs.getInt("stok"));
         dto.setSatuan(rs.getString("satuan"));
         dto.setNamaKategori(rs.getString("nama_kategori"));
-        dto.setFotoProduk(rs.getBytes("foto_produk"));  // Ubah ke getBytes
+        // Ambil byte[] dari DB, lalu encode ke Base64 String dengan data URL
+        byte[] fotoBytes = rs.getBytes("foto_produk");
+        if (fotoBytes != null && fotoBytes.length > 0) {
+            String base64 = Base64.getEncoder().encodeToString(fotoBytes);
+            dto.setFotoProduk("data:image/jpeg;base64," + base64);
+        } else {
+            dto.setFotoProduk(""); // Set empty string instead of null
+        }
         return dto;
     };
 
@@ -44,23 +52,23 @@ public class ProdukDao {
         }
     }
 
-    public int save(ProdukDto p) {
+    public int save(ProdukDto p, byte[] fotoBytes) {
         String sql = "INSERT INTO produk (nama_produk, harga, stok, satuan, nama_kategori, foto_produk) VALUES (?, ?, ?, ?, ?, ?)";
-        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(), p.getFotoProduk());
+        return jdbc.update(sql, p.getNamaProduk(), p.getHarga(), p.getStok(), p.getSatuan(), p.getNamaKategori(),
+                fotoBytes);
     }
 
-    public int update(ProdukDto p) {
+    public int update(ProdukDto p, byte[] fotoBytes) {
         String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ?, foto_produk = ? WHERE id = ?";
         try {
-            return jdbc.update(sql, 
-                p.getNamaProduk(), 
-                p.getHarga(), 
-                p.getStok(), 
-                p.getSatuan(), 
-                p.getNamaKategori(), 
-                p.getFotoProduk(),  // byte array
-                p.getId()
-            );
+            return jdbc.update(sql,
+                    p.getNamaProduk(),
+                    p.getHarga(),
+                    p.getStok(),
+                    p.getSatuan(),
+                    p.getNamaKategori(),
+                    fotoBytes,
+                    p.getId());
         } catch (Exception e) {
             logger.error("Error updating produk: {}", e.getMessage(), e);
             throw e;

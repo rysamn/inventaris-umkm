@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,23 +45,39 @@ public class PenjualanDao {
         return dto;
     };
 
-    public List<PenjualanDto> findAll() {
-        String sql = "SELECT p.id, p.id_pelanggan, pl.nama_pelanggan, p.id_pengguna, " +
-                     "pg.nama_pengguna, p.tanggal, p.total " +
-                     "FROM penjualan p " +
-                     "LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id " +
-                     "LEFT JOIN pengguna pg ON p.id_pengguna = pg.id " +
-                     "ORDER BY p.tanggal DESC";
-        return jdbc.query(sql, rowMapper);
+    public List<PenjualanDto> findAll(int page, int size, String query) {
+        int offset = page * size;
+        List<Object> params = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("SELECT p.id, p.id_pelanggan, pl.nama_pelanggan, p.id_pengguna, " +
+                "pg.nama_pengguna, p.tanggal, p.total " +
+                "FROM penjualan p " +
+                "LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id " +
+                "LEFT JOIN pengguna pg ON p.id_pengguna = pg.id ");
+
+        if (query != null && !query.trim().isEmpty()) {
+            sql.append(
+                    "WHERE LOWER(pl.nama_pelanggan) LIKE ? OR LOWER(pg.nama_pengguna) LIKE ? OR CAST(p.id AS TEXT) LIKE ? ");
+            String searchQuery = "%" + query.toLowerCase() + "%";
+            params.add(searchQuery);
+            params.add(searchQuery);
+            params.add(searchQuery);
+        }
+
+        sql.append("ORDER BY p.tanggal DESC LIMIT ? OFFSET ?");
+        params.add(size);
+        params.add(offset);
+
+        return jdbc.query(sql.toString(), rowMapper, params.toArray());
     }
 
     public Optional<PenjualanDto> findById(Integer id) {
         String sql = "SELECT p.id, p.id_pelanggan, pl.nama_pelanggan, p.id_pengguna, " +
-                     "pg.nama_pengguna, p.tanggal, p.total " +
-                     "FROM penjualan p " +
-                     "LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id " +
-                     "LEFT JOIN pengguna pg ON p.id_pengguna = pg.id " +
-                     "WHERE p.id = ?";
+                "pg.nama_pengguna, p.tanggal, p.total " +
+                "FROM penjualan p " +
+                "LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id " +
+                "LEFT JOIN pengguna pg ON p.id_pengguna = pg.id " +
+                "WHERE p.id = ?";
         try {
             return Optional.ofNullable(jdbc.queryForObject(sql, rowMapper, id));
         } catch (EmptyResultDataAccessException e) {
@@ -70,16 +87,16 @@ public class PenjualanDao {
 
     public List<DetailPenjualanDto> findDetailByPenjualanId(Integer idPenjualan) {
         String sql = "SELECT d.id, d.id_penjualan, d.id_produk, p.nama_produk, d.jumlah, d.harga " +
-                     "FROM detail_penjualan d " +
-                     "LEFT JOIN produk p ON d.id_produk = p.id " +
-                     "WHERE d.id_penjualan = ?";
+                "FROM detail_penjualan d " +
+                "LEFT JOIN produk p ON d.id_produk = p.id " +
+                "WHERE d.id_penjualan = ?";
         return jdbc.query(sql, detailRowMapper, idPenjualan);
     }
 
     public int save(PenjualanDto penjualan, KeyHolder keyHolder) {
         String sql = "INSERT INTO penjualan (id_pelanggan, id_pengguna, total) VALUES (?, ?, ?)";
         return jdbc.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, new String[]{"id"}); // HANYA RETURN ID
+            PreparedStatement ps = connection.prepareStatement(sql, new String[] { "id" }); // HANYA RETURN ID
             ps.setInt(1, penjualan.getIdPelanggan());
             ps.setInt(2, penjualan.getIdPengguna());
             ps.setBigDecimal(3, penjualan.getTotal());

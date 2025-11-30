@@ -11,6 +11,5 @@ public class ProdukDto {
     private Integer stok;
     private String satuan;
     private String namaKategori;
-    private byte[] fotoProduk;  // Ubah dari String ke byte[]
-    private String fotoPreview;  // Untuk preview base64 di frontend
+    private String fotoProduk; 
 }

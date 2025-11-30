@@ -27,8 +27,8 @@ public class PenjualanService {
     @Autowired
     private LogInventarisService logInventarisService;
 
-    public List<PenjualanDto> listAllPenjualan() {
-        List<PenjualanDto> penjualanList = penjualanDao.findAll();
+    public List<PenjualanDto> listAllPenjualan(int page, int size, String query) {
+        List<PenjualanDto> penjualanList = penjualanDao.findAll(page, size, query);
         // Load detail untuk setiap penjualan
         penjualanList.forEach(p -> {
             List<DetailPenjualanDto> details = penjualanDao.findDetailByPenjualanId(p.getId());
@@ -43,13 +43,13 @@ public class PenjualanService {
     public PenjualanDto getPenjualanById(Integer id) {
         PenjualanDto penjualan = penjualanDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Penjualan", "id", id));
-        
+
         List<DetailPenjualanDto> details = penjualanDao.findDetailByPenjualanId(id);
         details.forEach(d -> {
             d.setSubtotal(d.getHarga().multiply(BigDecimal.valueOf(d.getJumlah())));
         });
         penjualan.setDetailPenjualan(details);
-        
+
         return penjualan;
     }
 
@@ -58,35 +58,35 @@ public class PenjualanService {
         // 1. Simpan header penjualan
         KeyHolder keyHolder = new GeneratedKeyHolder();
         penjualanDao.save(penjualanDto, keyHolder);
-        
+
         Integer idPenjualan = keyHolder.getKey().intValue();
-        
+
         // 2. Simpan detail penjualan dan update stok produk
         for (DetailPenjualanDto detail : penjualanDto.getDetailPenjualan()) {
             detail.setIdPenjualan(idPenjualan);
             penjualanDao.saveDetail(detail);
-            
+
             // 3. Update stok produk (kurangi stok)
             ProdukDto produk = produkDao.findById(detail.getIdProduk())
                     .orElseThrow(() -> new ResourceNotFoundException("Produk", "id", detail.getIdProduk()));
-            
+
             // Validasi stok cukup
             if (produk.getStok() < detail.getJumlah()) {
-                throw new RuntimeException("Stok produk " + produk.getNamaProduk() + " tidak mencukupi. Stok tersedia: " + produk.getStok());
+                throw new RuntimeException("Stok produk " + produk.getNamaProduk() + " tidak mencukupi. Stok tersedia: "
+                        + produk.getStok());
             }
-            
+
             produk.setStok(produk.getStok() - detail.getJumlah());
-            produkDao.update(produk);
-            
+            produkDao.update(produk, null);
+
             // 4. Catat log inventaris
             logInventarisService.createLog(
-                detail.getIdProduk(), 
-                "keluar", 
-                detail.getJumlah(), 
-                "Penjualan ke pelanggan ID: " + penjualanDto.getIdPelanggan()
-            );
+                    detail.getIdProduk(),
+                    "keluar",
+                    detail.getJumlah(),
+                    "Penjualan ke pelanggan ID: " + penjualanDto.getIdPelanggan());
         }
-        
+
         return 1;
     }
 
@@ -94,24 +94,23 @@ public class PenjualanService {
     public int deletePenjualan(Integer id) {
         // Get detail penjualan dulu sebelum dihapus
         List<DetailPenjualanDto> details = penjualanDao.findDetailByPenjualanId(id);
-        
+
         // Kembalikan stok produk
         for (DetailPenjualanDto detail : details) {
             ProdukDto produk = produkDao.findById(detail.getIdProduk())
                     .orElseThrow(() -> new ResourceNotFoundException("Produk", "id", detail.getIdProduk()));
-            
+
             produk.setStok(produk.getStok() + detail.getJumlah());
-            produkDao.update(produk);
-            
+            produkDao.update(produk, null);
+
             // Log
             logInventarisService.createLog(
-                detail.getIdProduk(), 
-                "masuk", 
-                detail.getJumlah(), 
-                "Pembatalan penjualan ID: " + id
-            );
+                    detail.getIdProduk(),
+                    "masuk",
+                    detail.getJumlah(),
+                    "Pembatalan penjualan ID: " + id);
         }
-        
+
         // Hapus penjualan (detail akan terhapus otomatis karena CASCADE)
         return penjualanDao.delete(id);
     }

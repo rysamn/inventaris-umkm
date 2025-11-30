@@ -24,9 +24,24 @@ public class PenjualanController {
     private PenjualanService penjualanService;
 
     @GetMapping
-    public ResponseEntity<List<PenjualanDto>> getAllPenjualan() {
+    public ResponseEntity<List<PenjualanDto>> getAllPenjualan(
+            @RequestParam(defaultValue = "0") String pageStr,
+            @RequestParam(defaultValue = "10") String sizeStr,
+            @RequestParam(required = false, defaultValue = "") String query) {
         try {
-            return ResponseEntity.ok(penjualanService.listAllPenjualan());
+            int page = 0;
+            int size = 10;
+            try {
+                page = Integer.parseInt(pageStr);
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid page parameter: {}, using default 0", pageStr);
+            }
+            try {
+                size = Integer.parseInt(sizeStr);
+            } catch (NumberFormatException e) {
+                logger.warn("Invalid size parameter: {}, using default 10", sizeStr);
+            }
+            return ResponseEntity.ok(penjualanService.listAllPenjualan(page, size, query));
         } catch (Exception e) {
             logger.error("Error saat mengambil semua data Penjualan: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
@@ -51,7 +66,8 @@ public class PenjualanController {
     public ResponseEntity<String> createPenjualan(@RequestBody PenjualanDto penjualanDto) {
         try {
             if (penjualanService.createPenjualan(penjualanDto) > 0) {
-                return new ResponseEntity<>("Transaksi Penjualan berhasil dibuat dan stok produk telah diperbarui.", HttpStatus.CREATED);
+                return new ResponseEntity<>("Transaksi Penjualan berhasil dibuat dan stok produk telah diperbarui.",
+                        HttpStatus.CREATED);
             }
             return new ResponseEntity<>("Gagal membuat Penjualan.", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
@@ -63,14 +79,16 @@ public class PenjualanController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deletePenjualan(@PathVariable Integer id) {
         try {
-            if (penjualanService.deletePenjualan(id) > 0) {
-                return ResponseEntity.ok("Penjualan berhasil dihapus dan stok produk telah dikembalikan.");
+            int result = penjualanService.deletePenjualan(id);
+            if (result > 0) {
+                return ResponseEntity.ok("Penjualan berhasil dibatalkan dan stok produk telah dikembalikan.");
             }
             return new ResponseEntity<>("Gagal menghapus, Penjualan dengan id " + id + " tidak ditemukan.",
                     HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             logger.error("Error saat menghapus Penjualan dengan id {}: {}", id, e.getMessage(), e);
-            return new ResponseEntity<>("Terjadi kesalahan: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Terjadi kesalahan saat membatalkan penjualan: " + e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

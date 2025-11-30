@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -14,9 +15,14 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    // Secret key untuk signing JWT (sebaiknya simpan di environment variable di production)
-    private final Key SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    
+    // Secret key untuk signing JWT (sebaiknya simpan di environment variable di
+    // production)
+    private final Key SECRET_KEY;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.SECRET_KEY = Keys.hmacShaKeyFor(secret.getBytes());
+    }
+
     // Token valid selama 24 jam
     private final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
 
@@ -24,7 +30,7 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("peran", peran);
         claims.put("id", id);
-        
+
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(namaPengguna)
