@@ -19,6 +19,10 @@ public class ProdukService {
         return produkDao.findAll();
     }
 
+    public List<ProdukDto> listAllProdukWithoutFoto() {
+        return produkDao.findAllWithoutFoto();
+    }
+
     public ProdukDto getProdukById(Integer id) {
         return produkDao.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produk", "id", id));

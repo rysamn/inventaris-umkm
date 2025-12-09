@@ -38,9 +38,25 @@ public class ProdukDao {
         return dto;
     };
 
+    private final RowMapper<ProdukDto> rowMapperWithoutFoto = (rs, rowNum) -> {
+        ProdukDto dto = new ProdukDto();
+        dto.setId(rs.getInt("id"));
+        dto.setNamaProduk(rs.getString("nama_produk"));
+        dto.setHarga(rs.getBigDecimal("harga"));
+        dto.setStok(rs.getInt("stok"));
+        dto.setSatuan(rs.getString("satuan"));
+        dto.setNamaKategori(rs.getString("nama_kategori"));
+        return dto;
+    };
+
     public List<ProdukDto> findAll() {
         String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori, foto_produk FROM produk ORDER BY id";
         return jdbc.query(sql, rowMapper);
+    }
+
+    public List<ProdukDto> findAllWithoutFoto() {
+        String sql = "SELECT id, nama_produk, harga, stok, satuan, nama_kategori FROM produk ORDER BY id";
+        return jdbc.query(sql, rowMapperWithoutFoto);
     }
 
     public Optional<ProdukDto> findById(Integer id) {

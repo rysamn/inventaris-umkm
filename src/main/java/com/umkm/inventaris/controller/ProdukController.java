@@ -33,6 +33,16 @@ public class ProdukController {
         }
     }
 
+    @GetMapping("/without-foto")
+    public ResponseEntity<List<ProdukDto>> getAllProdukWithoutFoto() {
+        try {
+            return ResponseEntity.ok(produkService.listAllProdukWithoutFoto());
+        } catch (Exception e) {
+            logger.error("Error saat mengambil list data Produk: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Collections.emptyList());
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getProdukById(@PathVariable Integer id) {
         try {
