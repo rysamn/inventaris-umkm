@@ -75,6 +75,24 @@ public class ProdukDao {
     }
 
     public int update(ProdukDto p, byte[] fotoBytes) {
+        // Jika fotoBytes null, jangan update foto (preserve foto lama)
+        if (fotoBytes == null) {
+            String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ? WHERE id = ?";
+            try {
+                return jdbc.update(sql,
+                        p.getNamaProduk(),
+                        p.getHarga(),
+                        p.getStok(),
+                        p.getSatuan(),
+                        p.getNamaKategori(),
+                        p.getId());
+            } catch (Exception e) {
+                logger.error("Error updating produk: {}", e.getMessage(), e);
+                throw e;
+            }
+        }
+
+        // Jika ada foto baru, update dengan foto
         String sql = "UPDATE produk SET nama_produk = ?, harga = ?, stok = ?, satuan = ?, nama_kategori = ?, foto_produk = ? WHERE id = ?";
         try {
             return jdbc.update(sql,

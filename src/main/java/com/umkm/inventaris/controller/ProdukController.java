@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 
@@ -74,6 +75,16 @@ public class ProdukController {
     public ResponseEntity<String> updateProduk(@PathVariable Integer id, @RequestBody ProdukDto produkDto) {
         try {
             produkDto.setId(id);
+
+            // Jika foto mengandung prefix data URL (tanda foto lama dari frontend), set
+            // null
+            // Sehingga ProdukService akan skip update foto
+            if (produkDto.getFotoProduk() != null &&
+                    produkDto.getFotoProduk().startsWith("data:image/") &&
+                    !isBase64DataUrl(produkDto.getFotoProduk())) {
+                produkDto.setFotoProduk(null); // Skip foto update jika hanya foto lama
+            }
+
             if (produkService.updateProduk(produkDto) > 0) {
                 return ResponseEntity.ok("Data Produk berhasil diperbarui.");
             }
@@ -82,6 +93,23 @@ public class ProdukController {
         } catch (Exception e) {
             logger.error("Error saat memperbarui data Produk dengan id {}: {}", id, e.getMessage(), e);
             return new ResponseEntity<>("Terjadi kesalahan pada server.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private boolean isBase64DataUrl(String str) {
+        // Cek apakah string adalah Base64 yang valid (bukan hanya data URL dengan foto
+        // lama)
+        if (!str.startsWith("data:image/"))
+            return false;
+        int commaIndex = str.indexOf(",");
+        if (commaIndex == -1)
+            return false;
+        try {
+            String base64Part = str.substring(commaIndex + 1);
+            Base64.getDecoder().decode(base64Part);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
